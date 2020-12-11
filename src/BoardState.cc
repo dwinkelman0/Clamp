@@ -32,6 +32,13 @@ std::string squareToString(const uint8_t square) {
   output.push_back('1' + square / 8);
   return output;
 }
+
+uint8_t stringToSquare(const std::string& str) {
+  uint8_t output = 0;
+  output += str.c_str()[0] - 'a';
+  output += 8 * (str.c_str()[1] - '1');
+  return output;
+}
 }  // namespace
 
 namespace clamp {
@@ -108,6 +115,111 @@ BoardState::BoardState() {
   castling_ = WHITE_OO | WHITE_OOO | BLACK_OO | BLACK_OOO;
   halfmoveCounter_ = 0;
   fullmoveCounter_ = 1;
+}
+
+BoardState::BoardState(const std::string& fen) {
+  const char* it = fen.c_str();
+  int square = 56;
+  while (*it != ' ') {
+    if (*it == '/') {
+      square -= 16;
+    } else if ('1' <= *it && *it <= '8') {
+      int end = square + (*it - '0');
+      for (; square < end; ++square) {
+        squares_[square] = NO_PIECE;
+      }
+    } else {
+      uint8_t piece = NO_PIECE;
+      switch (*it) {
+        case 'P':
+          piece = WHITE_PAWN;
+          break;
+        case 'N':
+          piece = WHITE_KNIGHT;
+          break;
+        case 'B':
+          piece = WHITE_BISHOP;
+          break;
+        case 'R':
+          piece = WHITE_ROOK;
+          break;
+        case 'Q':
+          piece = WHITE_QUEEN;
+          break;
+        case 'K':
+          piece = WHITE_KING;
+          break;
+        case 'p':
+          piece = BLACK_PAWN;
+          break;
+        case 'n':
+          piece = BLACK_KNIGHT;
+          break;
+        case 'b':
+          piece = BLACK_BISHOP;
+          break;
+        case 'r':
+          piece = BLACK_ROOK;
+          break;
+        case 'q':
+          piece = BLACK_QUEEN;
+          break;
+        case 'k':
+          piece = BLACK_KING;
+          break;
+        default:
+          piece = NO_PIECE;
+          break;
+      }
+      squares_[square++] = piece;
+    }
+    ++it;
+  }
+  ++it;
+  whiteToMove_ = *(it++) == 'w';
+  ++it;
+  if (*it == '-') {
+    castling_ = 0;
+    ++it;
+  } else {
+    while (*it != ' ') {
+      switch (*it) {
+        case 'K':
+          castling_ |= WHITE_OO;
+          break;
+        case 'Q':
+          castling_ |= WHITE_OOO;
+          break;
+        case 'k':
+          castling_ |= BLACK_OO;
+          break;
+        case 'q':
+          castling_ |= BLACK_OOO;
+          break;
+      }
+      ++it;
+    }
+  }
+  ++it;
+  if (*it == '-') {
+    enPassant_ = 0;
+    ++it;
+  } else {
+    enPassant_ = stringToSquare(std::string(it, it + 2));
+    it += 2;
+  }
+  ++it;
+  halfmoveCounter_ = 0;
+  while (*it != ' ') {
+    halfmoveCounter_ *= 10;
+    halfmoveCounter_ += *(it++) - '0';
+  }
+  ++it;
+  fullmoveCounter_ = 0;
+  while (*it != '\0') {
+    fullmoveCounter_ *= 10;
+    fullmoveCounter_ += *(it++) - '0';
+  }
 }
 
 std::ostream& operator<<(std::ostream& os, const BoardState& state) {

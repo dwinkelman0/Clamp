@@ -8,8 +8,13 @@ namespace clamp {
 
 class BoardState {
  public:
+  /* Create the initial game state */
   BoardState();
 
+  /* Create a game state from a FEN string */
+  BoardState(const std::string& fen);
+
+  /* Output the game state to a FEN string */
   friend std::ostream& operator<<(std::ostream& os, const BoardState& state);
 
  private:
